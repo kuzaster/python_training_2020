@@ -26,9 +26,3 @@ def custom_range(seq, *args) -> List[any]:
     stop, step = seq.index(sl.stop), sl.step or 1
     new_seq = seq[start:stop:step]
     return list(new_seq)
-
-
-# print(custom_range(string.ascii_lowercase, 'p', 'g', -2))
-# print(custom_range(string.ascii_lowercase, 'g', 'p'))
-# print(custom_range(string.ascii_lowercase, 'g'))
-# print(custom_range([2, 3, 4, 5, 6, 7, 8, 9, 10, 11], 4, 9, 2))
