@@ -20,5 +20,3 @@ def is_armstrong(number: int) -> bool:
 
 
 print(is_armstrong(20))
-# assert is_armstrong(153) == True, 'Is Armstrong number'
-# assert is_armstrong(10) == False, 'Is not Armstrong number'
