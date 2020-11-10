@@ -17,6 +17,3 @@ def is_armstrong(number: int) -> bool:
     pw = len(str(number))
     num_pwd = tuple(i ** pw for i in map(int, str(number)))
     return number == sum(num_pwd)
-
-
-print(is_armstrong(20))
