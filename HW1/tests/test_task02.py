@@ -1,8 +1,7 @@
 from typing import Sequence
 
 import pytest
-
-from HW1.tasks.task02 import check_fibonacci
+from tasks.task02 import check_fibonacci
 
 
 @pytest.mark.parametrize(
@@ -10,7 +9,7 @@ from HW1.tasks.task02 import check_fibonacci
     [
         ([0, 1, 1, 2, 3], True),
         ([0, 1, 1, 3, 4], False),
-        ([0, 1], False),
+        ([0, 1], True),
     ],
 )
 def test_fibonacci(value: Sequence[int], expected_result: bool):
