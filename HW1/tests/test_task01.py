@@ -1,6 +1,5 @@
 import pytest
-
-from HW1.tasks.task01 import check_power_of_2
+from tasks.task01 import check_power_of_2
 
 
 @pytest.mark.parametrize(
