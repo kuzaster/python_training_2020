@@ -17,7 +17,7 @@ from task03 import Filter
         (
             (
                 [lambda a: a % 2 == 0, lambda a: a > 0, lambda a: isinstance(a, int)],
-                range(-4, 4),
+                range(-5, 4),
             ),
             [2],
         ),
