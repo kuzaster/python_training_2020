@@ -3,14 +3,24 @@ from task04 import is_armstrong
 
 
 @pytest.mark.parametrize(
-    ["value", "expected_result"],
+    "value",
     [
-        (153, True),
-        (10, False),
-        (9, True),
+        9,
+        153,
+        370,
     ],
 )
-def test_armstrong(value: int, expected_result: bool):
-    actual_result = is_armstrong(value)
+def test_is_armstrong(value: int):
+    assert is_armstrong(value) is True
 
-    assert actual_result == expected_result
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        10,
+        125,
+        256,
+    ],
+)
+def test_is_not_armstrong(value: int):
+    assert is_armstrong(value) is False
