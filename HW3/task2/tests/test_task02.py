@@ -1,4 +1,3 @@
-import pytest
 from task02 import fast_sum_of_slow_calc
 
 
