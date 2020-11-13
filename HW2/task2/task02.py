@@ -17,11 +17,14 @@ Input: [2,2,1,1,1,2,2]
 Output: 2, 1
 
 """
-from collections import Counter
+from collections import defaultdict
 from typing import List, Tuple
 
 
 def major_and_minor_elem(inp: List) -> Tuple[int, int]:
-    major = Counter(inp).most_common(1)[0][0]
-    minor = Counter(inp).most_common()[: -1 - 1 : -1][0][0]
+    my_counter = defaultdict(int)
+    for i in inp:
+        my_counter[i] += 1
+    major = sorted(my_counter.items(), key=lambda k: (k[1], k[0]))[-1][0]
+    minor = sorted(my_counter.items(), key=lambda k: (k[1], k[0]))[0][0]
     return major, minor
