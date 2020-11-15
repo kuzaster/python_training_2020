@@ -40,7 +40,7 @@ from task01 import get_longest_diverse_words
         ),
     ],
 )
-def test_major_minor(value: str, expected_result: List[str]):
+def test_longest_diverse_words(value: str, expected_result: List[str]):
     actual_result = get_longest_diverse_words(value)
 
     assert actual_result == expected_result
