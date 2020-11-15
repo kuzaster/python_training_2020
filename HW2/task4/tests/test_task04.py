@@ -1,14 +1,12 @@
-import pytest
+from unittest.mock import Mock
+
 from task04 import cache
 
 
 def test_cache():
-    def func(a, b):
-        return (a ** b) ** 2
-
-    cache_func = cache(func)
-    some = 100, 200
-    val_1 = cache_func(*some)
-    val_2 = cache_func(*some)
-
-    assert val_1 is val_2
+    m = Mock()
+    n = m
+    m = cache(m)()
+    m()
+    m()
+    assert n.call_count == 1
