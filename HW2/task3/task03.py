@@ -14,9 +14,21 @@ assert combinations([1, 2], [3, 4]) == [
     [2, 4],
 ]
 """
-import itertools
 from typing import Any, List
 
 
 def combinations(*args: List[Any]) -> List[List]:
-    return list(map(list, list(itertools.product(*list(args)))))
+    all_comb_lists = []
+
+    def combine(in_lists, cur_comb_list):
+        last = len(in_lists) == 1
+        n = len(in_lists[0])
+        for i in range(n):
+            item = cur_comb_list + [(in_lists[0][i])]
+            if last:
+                all_comb_lists.append(item)
+            else:
+                combine(in_lists[1:], item)
+
+    combine(args, [])
+    return all_comb_lists
