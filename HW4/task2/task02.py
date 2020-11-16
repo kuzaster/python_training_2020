@@ -18,17 +18,8 @@ You will learn:
 59
 * https://docs.python.org/3/library/urllib.request.html#urllib.request.urlopen
 """
-import json
 import urllib.request
 from urllib import error
-
-
-def read_by_symbol(html_handler):
-    char = " "
-    while char:
-        char = html_handler.read(1)
-        # char = html_handler.read(1).decode("utf-8")
-        yield char
 
 
 def count_dots_on_i(url: str) -> int:
@@ -37,14 +28,8 @@ def count_dots_on_i(url: str) -> int:
         f = urllib.request.urlopen(url)
         html = f.read().decode("utf-8")
         for symbol in html:
-            # for symbol in read_by_symbol(f):
             if symbol == "i":
                 amount_i += 1
-                # return amount_i
         return amount_i
     except urllib.error.HTTPError:
         raise (ValueError(f"Unreachable {url}")) from None
-
-
-# print(count_dots_on_i("https://example.com/"))
-# print(urllib.request.urlopen('https://example.com/').read(1))
