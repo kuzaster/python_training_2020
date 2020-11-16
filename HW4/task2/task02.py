@@ -26,7 +26,8 @@ from urllib import error
 def read_by_symbol(html_handler):
     char = " "
     while char:
-        char = html_handler.read(1).decode("utf-8")
+        char = html_handler.read(1)
+        # char = html_handler.read(1).decode("utf-8")
         yield char
 
 
@@ -34,13 +35,16 @@ def count_dots_on_i(url: str) -> int:
     amount_i = 0
     try:
         f = urllib.request.urlopen(url)
-        for symbol in read_by_symbol(f):
+        html = f.read().decode("utf-8")
+        for symbol in html:
+            # for symbol in read_by_symbol(f):
             if symbol == "i":
                 amount_i += 1
+                # return amount_i
         return amount_i
     except urllib.error.HTTPError:
         raise (ValueError(f"Unreachable {url}")) from None
 
 
-print(count_dots_on_i("https://example.com/"))
+# print(count_dots_on_i("https://example.com/"))
 # print(urllib.request.urlopen('https://example.com/').read(1))
