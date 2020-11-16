@@ -57,7 +57,6 @@ def fizzbuzz(n: int) -> List[str]:
         raise ValueError("It is not a number") from None
 
 
-
 if __name__ == "__main__":
     import doctest
 
