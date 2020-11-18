@@ -137,39 +137,3 @@ if __name__ == "__main__":
     import doctest
 
     doctest.testmod()
-    # teacher = Teacher('Daniil', 'Shadrin')
-    # student = Student('Roman', 'Petrov')
-    # teacher.last_name  # Daniil
-    # student.first_name  # Petrov
-    #
-    # expired_homework = teacher.create_homework('Learn functions', 0)
-    # expired_homework.created  # Example: 2019-05-26 16:44:30.688762
-    # expired_homework.deadline  # 0:00:00
-    # expired_homework.text  # 'Learn functions'
-    #
-    # # create function from method and use it
-    # create_homework_too = teacher.create_homework
-    # oop_homework = create_homework_too('create 2 simple classes', 5)
-    # oop_homework.deadline  # 5 days, 0:00:00
-    #
-    # student.do_homework(oop_homework)
-    # student.do_homework(expired_homework)  # You are late
-# teacher = Teacher('Daniil', 'Shadrin')
-# student = Student('Roman', 'Petrov')
-# print(teacher.last_name)  # Daniil
-# print(student.first_name)  # Petrov
-#
-# expired_homework = teacher.create_homework('Learn functions', 0)
-# print(expired_homework.created)  # Example: 2019-05-26 16:44:30.688762
-# print(expired_homework.deadline)  # 0:00:00
-# print(expired_homework.text)  # 'Learn functions'
-# # print(expired_homework.is_active())
-#
-# # create function from method and use it
-# create_homework_too = teacher.create_homework
-# oop_homework = create_homework_too('create 2 simple classes', 5)
-# print(oop_homework.deadline)  # 5 days, 0:00:00
-# #
-#
-# student.do_homework(oop_homework)
-# student.do_homework(expired_homework)  # You are late
