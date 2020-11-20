@@ -38,23 +38,8 @@ import datetime
 
 class Homework:
     """
-    Class Homework takes two attributes 'text' - with text of homework
-    and 'days' - the amount of days for homework
-    Class Homework has such attributes:
-        'text' - stores the text of homework
-        'deadline' - stores datetime.timedelta object with amount of days for homework
-        'created' - stores exact date and time of creation homework
     Class Homework has method 'is_active',
     which check deadline of homework is passed or not. Return boolean
-    >>> homework = Homework('Learn functions', 0)
-    >>> homework.text
-    'Learn functions'
-    >>> isinstance(homework.created, datetime.datetime)
-    True
-    >>> homework.deadline.days
-    0
-    >>> homework.is_active()
-    False
     """
 
     def __init__(self, text, days):
@@ -71,22 +56,10 @@ class Homework:
 
 class Student:
     """
-    Class Student takes and stores two attributes:
-    'last_name' - with the last name of student
-    'first_name' - with the first name of student
     Class Student has method 'do_homework',
     which takes class Homework object as argument
-    anf return this object if deadline of homework is not passed
+    and return this object if deadline of homework is not passed
     or print 'You are late' and return None otherwise
-    >>> student = Student('Roman', 'Petrov')
-    >>> student.first_name  # Petrov
-    'Petrov'
-    >>> homework1 = Homework('Learn functions', 0)
-    >>> student.do_homework(homework1)
-    You are late
-    >>> homework2 = Homework('create 2 simple classes', 5)
-    >>> isinstance(student.do_homework(homework2), Homework)
-    True
     """
 
     def __init__(self, last_name, first_name):
@@ -102,27 +75,10 @@ class Student:
 
 class Teacher:
     """
-    Class Teacher takes and stores two attributes:
-    'last_name' - with the last name of teacher
-    'first_name' - with the first name of teacher
     Class Teacher hs method 'create_homework',
     which takes two arguments, 'text' - text of homework
     and 'days' - the amount of days for homework
     and return the instance of class Homework with attributes 'text' and 'days'
-    >>> teacher = Teacher('Daniil', 'Shadrin')
-    >>> teacher.last_name
-    'Daniil'
-    >>> homework = teacher.create_homework('Learn functions', 0)
-    >>> isinstance(homework, Homework)
-    True
-    >>> homework.text
-    'Learn functions'
-    >>> create_homework_too = teacher.create_homework
-    >>> homework2 = create_homework_too('create 2 simple classes', 5)
-    >>> isinstance(homework2, Homework)
-    True
-    >>> homework2.text
-    'create 2 simple classes'
     """
 
     def __init__(self, last_name, first_name):
