@@ -16,4 +16,6 @@ Write a function that detects if a number is Armstrong number in functionaly sty
 def is_armstrong(number: int) -> bool:
     pw = len(str(number))
     num_pwd = tuple(i ** pw for i in map(int, str(number)))
+    # number = str(number)
+    # num_pwd = tuple(int(i) ** pw for i in number)
     return number == sum(num_pwd)
