@@ -20,12 +20,13 @@ You will learn:
 *** https://docs.python.org/3/tutorial/errors.html#handling-exceptions
 **** https://docs.python.org/3/tutorial/errors.html#raising-exceptions
 """
-import os
 
 
 def read_magic_number(path: str) -> bool:
-    if os.path.exists(path):
+    try:
         with open(path) as f:
             s = f.readline()
             i = float(s.strip())
         return 1 <= i < 3
+    except Exception as f:
+        raise ValueError from f
