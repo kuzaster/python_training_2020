@@ -87,9 +87,3 @@ class Teacher:
 
     def create_homework(self, text, days):
         return Homework(text, days)
-
-
-if __name__ == "__main__":
-    import doctest
-
-    doctest.testmod()
