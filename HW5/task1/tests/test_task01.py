@@ -1,17 +1,16 @@
-import pytest
 from task01 import Homework, Student, Teacher
 
 
 def test_method_is_true_of_class_Homework_with_expired_homework():
     expired_homework = Homework("some text", 0)
 
-    assert expired_homework.is_active() is False
+    assert not expired_homework.is_active()
 
 
 def test_method_is_true_of_class_Homework_with_actual_homework():
     actual_homework = Homework("some another text", 5)
 
-    assert actual_homework.is_active() is True
+    assert actual_homework.is_active()
 
 
 def test_method_do_homework_of_class_Student_with_expired_homework(capfd):

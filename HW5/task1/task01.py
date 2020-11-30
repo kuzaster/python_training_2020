@@ -49,9 +49,7 @@ class Homework:
 
     def is_active(self):
         date_now = datetime.datetime.now()
-        if self.deadline >= (date_now - self.created):
-            return True
-        return False
+        return self.deadline >= (date_now - self.created)
 
 
 class Student:
