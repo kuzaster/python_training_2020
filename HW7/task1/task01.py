@@ -16,8 +16,7 @@ def find_occurrences(tree: dict, element: Any) -> int:
     def counter(listed_tree, elem):
         for item in listed_tree:
             if isinstance(item, (int, str, bool)):
-                if item is elem:
-                    occurs[item] += 1
+                occurs[elem] += 1 if item is elem else 0
             elif not isinstance(item, dict):
                 counter(item, elem)
             else:
