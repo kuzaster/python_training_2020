@@ -32,6 +32,7 @@ def tic_tac_toe_checker(board: List[List]) -> str:
         (2, 4, 6),
     )
     for comb in win_combs:
-        if board[comb[0]] == board[comb[1]] == board[comb[2]] != "-":
-            return f"{board[comb[0]]} wins!"
+        f, s, t = comb
+        if board[f] == board[s] == board[t] != "-":
+            return f"{board[f]} wins!"
     return "draw!" if "-" not in board else "unfinished!"
