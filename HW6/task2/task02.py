@@ -83,7 +83,13 @@ class HomeworkResult:
         self.created = datetime.datetime.now()
 
 
-class Student:
+class PersonalData:
+    def __init__(self, last_name, first_name):
+        self.first_name = first_name
+        self.last_name = last_name
+
+
+class Student(PersonalData):
     """
     Class Student has method 'do_homework',
     which takes class Homework object and solution(string) as arguments
@@ -91,17 +97,13 @@ class Student:
     or raise DeadlineError with message 'You are late' otherwise
     """
 
-    def __init__(self, last_name, first_name):
-        self.first_name = first_name
-        self.last_name = last_name
-
     def do_homework(self, homework, solution):
         if homework.is_active():
             return HomeworkResult(self, homework, solution)
         raise DeadlineError("You are late")
 
 
-class Teacher(Student):
+class Teacher(PersonalData):
     """
     Method 'create_homework' takes two arguments, 'text' - text of homework
     and 'days' - the amount of days for homework
