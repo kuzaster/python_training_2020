@@ -28,11 +28,9 @@ class KeyValueStorage:
                     int(key)
                 except ValueError:
                     self.data_dict[key] = value
-                    # self.__dict__[key] = value
+                    # self.__dict__[key] = value    # another solution without using __getattr__ and data_dict
                 else:
                     raise ValueError(f"{item} cannot be assigned to an attribute")
-
-        #     self.data_dict = dict(map(str.strip, item.split('=')) for item in data.readlines())
 
     def __getattr__(self, key):
         return self.data_dict[key]
@@ -40,8 +38,3 @@ class KeyValueStorage:
     def __getitem__(self, key):
         return self.data_dict[key]
         # return self.__dict__[key]
-
-
-# storage = KeyValueStorage("/home/tim/PycharmProjects/python_training_2020/HW8/task1/task01.txt")
-# print(storage.file_data, type(storage.file_data))
-# print(storage.data_dict)
