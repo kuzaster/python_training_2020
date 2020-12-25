@@ -1,103 +1,160 @@
 import json
-from itertools import tee
+import os
+import re
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, SoupStrainer
 
 MAIN_URL = "https://markets.businessinsider.com"
 URL_SP500 = "https://markets.businessinsider.com/index/components/s&p_500"
 
 
-def get_dollar_rate():
-    req = requests.get("http://www.cbr.ru/scripts/XML_daily.asp?")
-    usa = BeautifulSoup(req.content, "lxml").find("valute", id="R01235").value.string
-    return float(usa.replace(",", "."))
+req = requests.get("http://www.cbr.ru/scripts/XML_daily.asp?")
+dollarRate = float(
+    re.search(f"США</\w*><\w*>(\d*\,?\d*)", req.text).group(1).replace(",", ".")
+)
 
 
-def get_soup_parser(url):
-    return BeautifulSoup(requests.get(url).content, "lxml")
+class Company:
+    def __init__(self, block):
+        self.company_block = block
+        self.splited_block = self.company_block.text.split()
+        self.values = {}
+        self.url = f"{MAIN_URL}{self.company_block.find('a')['href']}"
+        self.dollar_rate = dollarRate
 
+    def _get_response(self):
+        self.response = requests.get(self.url).text
 
-def generate_main_table_blocks(main_soap):
-    pages_block = main_soap.find("div", attrs={"class": "finando_paging"})
-    pages_urls = (f'{URL_SP500}{a["href"]}' for a in pages_block.find_all("a"))
-    soups = (get_soup_parser(url) for url in pages_urls)
-    table_blocks = (
-        soup.find("table", attrs={"class": "table table-small"}) for soup in soups
-    )
-    return tuple(table_blocks)
+    def _get_company_name_ticker(self):
+        self.name = re.findall(r'"label":"([\w\s\\.\(\)\-\&\,\']*)"', self.response)[
+            -1
+        ].strip()
+        self.ticker = re.findall(r'"symbol":"([\w\\.]*)"', self.response)[0]
 
+    def _get_one_year_index(self):
+        self.one_year_index = self.splited_block.pop()
 
-def get_company_urls(blocks_table):
-    for block in blocks_table:
-        yield from (f'{MAIN_URL}{tag_a["href"]}' for tag_a in block.find_all("a"))
-
-
-def get_company_names_and_tickers(blocks_table):
-    company_urls = get_company_urls(blocks_table)
-    soups = (get_soup_parser(url) for url in company_urls)
-
-    idents_block = (
-        company.find("h1", attrs={"class": "price-section__identifiers"})
-        for company in soups
-    )
-    block_1, block_2 = tee(idents_block, 2)
-    names = (idents.span.string.strip() for idents in block_1)
-    tickers = (idents.find_all("span")[2].string[2:] for idents in block_2)
-    return zip(names, tickers)
-
-
-def get_1_year_indexes(blocks_table):
-    for block in blocks_table:
-        yield from (
-            comp.find_all("td")[9].text.split()[1] for comp in block.find_all("tr")[1:]
+    def _get_rub_price(self):
+        self.price = round(
+            float(re.findall(r'"currentValue":(\d*\.?\d*)', self.response)[-1])
+            * self.dollar_rate,
+            2,
         )
 
+    def _get_potential_profit(self):
+        high_week = float(
+            re.search(r"high52weeks:\s*(\d*\.?\d*)", self.response).group(1)
+        )
+        low_week = float(
+            re.search(r"low52weeks:\s*(\d*\.?\d*)", self.response).group(1)
+        )
+        pot_prof = round(high_week * 100 / low_week - 100, 2)
+        self.poten_profit = f"{pot_prof}%"
 
-def get_prices_rub(blocks_table):
-    company_urls = get_company_urls(blocks_table)
-    soups = (get_soup_parser(url) for url in company_urls)
-    us_rate = get_dollar_rate()
+    def _get_p_e_ratio(self):
+        self.p_e_ratio = re.findall(
+            r'class="snapshot__data-item">\s*(\-?\d*[\,\.]?\d*\.?\d{,2})', self.response
+        )[4].replace(",", "")
 
-    price_block = (
-        company.find("div", attrs={"class": "price-section__values"})
-        for company in soups
-    )
-    prices = (
-        round(float(block.span.string.replace(",", "")) * us_rate, 2)
-        for block in price_block
-    )
-    return prices
-
-
-def get_10_the_most_grown_companies(blocks_table):
-    comp_names = get_company_names_and_tickers(blocks_table)
-    indexes_1_year = get_1_year_indexes(blocks_table)
-    d = zip(comp_names, indexes_1_year)
-    # bad way:
-    # result = ({"name": k[0][0], 'ticker': k[0][1], 'growth': k[1]}
-    #       for k in sorted(d, key=lambda k: float(k[1].strip('\%')), reverse=True)[:10])
-    # return result
+    def get_all(self):
+        self._get_response()
+        self._get_rub_price()
+        self._get_company_name_ticker()
+        self._get_one_year_index()
+        self._get_potential_profit()
+        self._get_p_e_ratio()
 
 
-def get_the_most_expensive_companies(blocks_table):
-    comp_names = get_company_names_and_tickers(blocks_table)
-    comp_prices = get_prices_rub(blocks_table)
-    z = zip(comp_names, comp_prices)
-    # bad way:
-    # sorted_prices = sorted(zip(comp_names, comp_prices), key=lambda k: k[1], reverse=True)[:10]
-    # result = ({"name": k[0][0], 'ticker': k[0][1], 'price': k[1]} for k in sorted_prices)
-    # return result
+def get_blocks(main_soap):
+    pages_block = main_soap.find("div", attrs={"class": "finando_paging"})
+    pages_urls = (f'{URL_SP500}{a["href"]}' for a in pages_block.find_all("a"))
+    for url in pages_urls:
+        only_table_tags = SoupStrainer("table", attrs={"class": "table table-small"})
+        table_block = BeautifulSoup(
+            requests.get(url).text, "lxml", parse_only=only_table_tags
+        )
+        yield from table_block.find_all("tr")[1:]
 
 
-MAIN_SOUP = get_soup_parser(URL_SP500)
-table_block = MAIN_SOUP.find("table", attrs={"class": "table table-small"})
-ALL_TABLE_BLOCKS = generate_main_table_blocks(MAIN_SOUP)  # tuple
+def get_all_companies():
+    main_soup = BeautifulSoup(requests.get(URL_SP500).text, "lxml")
+    company_blocks = get_blocks(main_soup)
+    return [Company(comp_block) for comp_block in company_blocks]
 
 
-# json_1 = get_10_the_most_grown_companies(ALL_TABLE_BLOCKS)
-# with open("grown.json", "w") as f:
-#     json.dump(tuple(json_1), f)
-# json_2 = get_the_most_expensive_companies(ALL_TABLE_BLOCKS)
-# with open("expensive.json", "w") as f:
-#     json.dump(tuple(json_2), f)
+def get_top_10_prices(all_companies):
+    top_10 = sorted(
+        all_companies, key=lambda company: float(company.price), reverse=True
+    )[:10]
+    top_10 = [
+        {"code": comp.ticker, "name": comp.name, "price": comp.price} for comp in top_10
+    ]
+    return top_10
+
+
+def get_top_10_low_p_e(all_companies):
+    top_10 = sorted(
+        all_companies, key=lambda company: float(company.p_e_ratio), reverse=False
+    )[:10]
+    return [
+        {"code": comp.ticker, "name": comp.name, "P/E": comp.p_e_ratio}
+        for comp in top_10
+    ]
+
+
+def get_top_10_grown(all_companies):
+    top_10 = sorted(
+        all_companies,
+        key=lambda company: float(company.one_year_index.strip("\%")),
+        reverse=True,
+    )[:10]
+    return [
+        {"code": comp.ticker, "name": comp.name, "growth": comp.one_year_index}
+        for comp in top_10
+    ]
+
+
+def get_top_10_potential(all_companies):
+    top_10 = sorted(
+        all_companies,
+        key=lambda company: float(company.poten_profit.strip("\%")),
+        reverse=True,
+    )[:10]
+    return [
+        {"code": comp.ticker, "name": comp.name, "potential profit": comp.poten_profit}
+        for comp in top_10
+    ]
+
+
+def write_json(file_name, data):
+    with open(
+        f"{os.path.join(os.getcwd(), os.path.dirname(__file__), file_name)}.json", "w"
+    ) as f:
+        json.dump(data, f, indent=4)
+
+
+if __name__ == "__main__":
+    START = datetime.now()
+
+    companies = get_all_companies()
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        for company in companies:
+            executor.submit(company.get_all)
+
+    top_10_prices = get_top_10_prices(companies)
+    write_json("top_10_prices", top_10_prices)
+
+    top_10_low_p_e = get_top_10_low_p_e(companies)
+    write_json("top_10_low_p_e", top_10_low_p_e)
+
+    top_10_grown = get_top_10_grown(companies)
+    write_json("top_10_grown", top_10_grown)
+
+    top_10_potential = get_top_10_potential(companies)
+    write_json("top_10_potential", top_10_potential)
+
+    print(f"Program duration = {datetime.now() - START}")
