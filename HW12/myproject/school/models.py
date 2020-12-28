@@ -4,7 +4,7 @@ from django.db import models
 class Homework(models.Model):
     db_table = "Homeworks"
 
-    text = models.TextField()
+    text = models.TextField(unique=True)
     deadline = models.DurationField()
     created = models.DateTimeField()
 
@@ -15,7 +15,7 @@ class Homework(models.Model):
 class HomeworkResult(models.Model):
     db_table = "HomeworkResults"
 
-    homework = models.ForeignKey(Homework, on_delete=models.CASCADE)
+    homework = models.ForeignKey(Homework, to_field="text", on_delete=models.CASCADE)
     author = models.ForeignKey("Student", on_delete=models.CASCADE)
     solution = models.TextField()
     created = models.DateTimeField()

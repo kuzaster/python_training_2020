@@ -21,6 +21,7 @@ def create_tables_records(apps, schema_editor):
         created=datetime.now(),
     )
     teacher_1 = Teacher(first_name="Bob", last_name="Kelso", homework_done=hw_1_result)
+
     student_1.save()
     homework_1.save()
     hw_1_result.save()
