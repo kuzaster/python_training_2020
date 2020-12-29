@@ -5,23 +5,22 @@ of this element in the tree.
 Tree can only contains basic structures like:
     str, list, tuple, dict, set, int, bool
 """
-from itertools import chain
 from typing import Any
 
 
 def find_occurrences(tree: dict, element: Any) -> int:
-    tree = chain.from_iterable(tree.items())
-    occurs = {element: 0}
+    occurs = 0
 
-    def counter(listed_tree, elem):
-        for item in listed_tree:
+    def counter(values):
+        nonlocal occurs
+        for item in values:
             if isinstance(item, (int, str, bool)):
-                occurs[elem] += 1 if item is elem else 0
+                occurs += 1 if item is element else 0
             elif not isinstance(item, dict):
-                counter(item, elem)
+                counter(item)
             else:
-                new_item = chain.from_iterable(item.items())
-                counter(new_item, element)
+                new_values = item.values()
+                counter(new_values)
 
-    counter(tree, element)
-    return occurs[element]
+    counter(tree.values())
+    return occurs
