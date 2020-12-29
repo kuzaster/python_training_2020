@@ -17,14 +17,14 @@ from itertools import zip_longest
 
 
 def iterator(item):
-    del_next = False
+    del_next = 0
     for it in reversed(item):
         if it == "#":
-            del_next = True
+            del_next += 1
         elif not del_next:
             yield it
         else:
-            del_next = False
+            del_next -= 1
 
 
 def backspace_compare(first: str, second: str):
