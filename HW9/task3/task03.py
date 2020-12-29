@@ -13,17 +13,17 @@ from pathlib import Path
 from typing import Callable, Optional
 
 
+def default_tokenizer(input_data):
+    yield input_data
+
+
 def universal_file_counter(
     dir_path: Path, file_extension: str, tokenizer: Optional[Callable] = None
 ) -> int:
     filtered_files = (
         file for file in dir_path.iterdir() if file.suffix[1:] == file_extension
     )
-
-    if not tokenizer:
-        with fileinput.input(filtered_files) as data:
-            amount_of_lines = sum(1 for _ in data)
-        return amount_of_lines
+    tokenizer = tokenizer or default_tokenizer
 
     amount_of_tokens = 0
     with fileinput.input(filtered_files) as data:
