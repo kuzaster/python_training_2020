@@ -25,37 +25,42 @@ import sqlite3
 class TableData:
     def __init__(self, database_name, table_name):
         self.database_name = os.path.join(os.path.dirname(__file__), database_name)
-        self.table_name = table_name
+        with sqlite3.connect(self.database_name) as conn:
+            query = "SELECT 1 FROM sqlite_master WHERE type='table' and name = ?"
+            if conn.execute(query, (table_name,)).fetchone() is not None:
+                self.table_name = table_name
 
-    @staticmethod
     def database_connection(func):
-        def get_cursor(self, *args, **kwargs):
-            with sqlite3.connect(f"{self.database_name}") as conn:
+        def wrapper(self, *args, **kwargs):
+            with sqlite3.connect(self.database_name) as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
-                return func(self, cursor, *args, **kwargs)
+                result = func(self, cursor, *args, **kwargs)
+                return result
 
-        return get_cursor
+        return wrapper
 
-    @database_connection.__func__
+    @database_connection
     def __len__(self, cursor):
         cursor.execute(f"SELECT COUNT(*) from {self.table_name}")
         amount_of_rows = cursor.fetchone()[0]
+        cursor.close()
         return amount_of_rows
 
-    @database_connection.__func__
+    @database_connection
     def __getitem__(self, cursor, item):
         cursor.execute(f"SELECT * from {self.table_name} where name=?", (item,))
         row_item = tuple(cursor.fetchone())
+        cursor.close()
         return row_item
 
-    @database_connection.__func__
-    def __contains__(self, cursor, item):
-        cursor.execute(f"SELECT * from {self.table_name} where name=?", (item,))
-        item_exists = bool(cursor.fetchone())
-        return item_exists
+    def __contains__(self, item):
+        try:
+            return bool(self.__getitem__(item))
+        except TypeError:
+            return False
 
-    @database_connection.__func__
+    @database_connection
     def __iter__(self, cursor):
-        cursor.execute(f"SELECT * from {self.table_name}")
-        return (cursor.fetchone() for _ in range(self.__len__()))
+        yield from cursor.execute(f"SELECT * from {self.table_name}")
+        cursor.close()
