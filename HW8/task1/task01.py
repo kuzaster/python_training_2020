@@ -16,17 +16,17 @@ In case when value cannot be assigned to an attribute (for example when there's 
 ValueError should be raised.
 File size is expected to be small, you are permitted to read it entirely into memory.
 """
+from keyword import iskeyword
 
 
 class KeyValueStorage:
     def __init__(self, file_path):
         with open(file_path) as data:
             self.data_dict = {}
-            for item in data.readlines():
-                key, value = map(str.strip, item.split("="))
-                try:
-                    int(key)
-                except ValueError:
+            for item in data:
+                key, value = map(str.strip, item.split("=", 1))
+                value = int(value) if value.isnumeric() else value
+                if key.isidentifier() and not iskeyword(key):
                     self.data_dict[key] = value
                     # self.__dict__[key] = value    # another solution without using __getattr__ and data_dict
                 else:

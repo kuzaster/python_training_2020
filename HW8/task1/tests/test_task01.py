@@ -17,18 +17,18 @@ def with_temp_file(content):
     return create_temp_file
 
 
-@with_temp_file(content="name=kek\npower=9001\n")
+@with_temp_file(content="name=lol kek=cheb\npower=9001\n")
 def test_keys_and_values_accessible_as_attributes(file_path):
     storage = KeyValueStorage(file_path)
-    assert storage.name == "kek"
-    assert storage.power == "9001"
+    assert storage.name == "lol kek=cheb"
+    assert storage.power == 9001
 
 
-@with_temp_file(content="name=kek\npower=9001\n")
+@with_temp_file(content="name=lol kek=cheb\npower=9001\n")
 def test_keys_and_values_accessible_as_collection(file_path):
     storage = KeyValueStorage(file_path)
-    assert storage["name"] == "kek"
-    assert storage["power"] == "9001"
+    assert storage["name"] == "lol kek=cheb"
+    assert storage["power"] == 9001
 
 
 @with_temp_file(content="name=kek\n1=first\n")
