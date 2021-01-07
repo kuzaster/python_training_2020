@@ -20,19 +20,21 @@ from typing import List
 
 
 def tic_tac_toe_checker(board: List[List]) -> str:
+    n = len(board)
     board = list(chain.from_iterable(board))
-    win_combs = (
-        (0, 1, 2),
-        (3, 4, 5),
-        (6, 7, 8),
-        (0, 3, 6),
-        (1, 4, 7),
-        (2, 5, 8),
-        (0, 4, 8),
-        (2, 4, 6),
-    )
+
+    win_combs = []
+    for i in range(0, n ** 2, n):
+        win_combs.append(slice(i, i + n))  # add win rows
+
+    for i in range(n):
+        win_combs.append(slice(i, n ** 2, n))  # add win columns
+
+    win_combs.append(slice(0, n ** 2, n + 1))  # add win diagonal
+    win_combs.append(slice(n - 1, n ** 2 - 1, n - 1))  # add second win diagonal
+
     for comb in win_combs:
-        f, s, t = comb
-        if board[f] == board[s] == board[t] != "-":
-            return f"{board[f]} wins!"
+        comb_slice = board[comb]
+        if len(set(comb_slice)) == 1 and "-" not in comb_slice:
+            return f"{comb_slice[0]} wins!"
     return "draw!" if "-" not in board else "unfinished!"
