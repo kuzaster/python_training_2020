@@ -1,0 +1,16 @@
+- docker_path: /home/tim/TestsProjects/Flask/DemoDocker/app_1
+  options:
+    detach: true
+    name: my-test-server
+    ports:
+      7000: 7000
+  port: 7000
+  public_url: http://localhost:7000
+- docker_path: github.com/dockerfile/nginx
+  options:
+    detach: true
+    name: nginx-server
+    ports:
+      80: 8080
+  port: 80
+  public_url: http://localhost:8080

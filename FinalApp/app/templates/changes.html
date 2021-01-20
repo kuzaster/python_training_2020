@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Change container</h1>
+    <form action="" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.options.label }}<br>
+            {{ form.options(cols=50, rows=4) }}
+            {% for error in form.options.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.dock_path.label }}<br>
+            {{ form.dock_path(size=32) }}
+            {% for error in form.dock_path.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.port.label }}<br>
+            {{ form.port(size=32) }}
+            {% for error in form.port.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.pub_url.label }}<br>
+            {{ form.pub_url(size=32) }}
+            {% for error in form.pub_url.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>{{ form.submit() }}</p>
+    </form>
+{% endblock %}
