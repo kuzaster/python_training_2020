@@ -6,4 +6,9 @@
       80: 8080
   port: 80
   public_url: http://localhost:8080
-
+- docker_path: https://github.com/oanhnn/docker-laravel-echo-server
+  options:
+    detach: true
+    name: test-echo-server
+  port: 6001
+  public_url: http://localhost:7001

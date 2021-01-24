@@ -29,15 +29,25 @@ def update_config(new_data, path=copy_path):
         yaml.dump(new_data, conf)
 
 
+def check_dock_path(dock_path):
+    if dock_path.startswith("https://github"):
+        dock_path = dock_path[8:]
+        return dock_path
+    return dock_path
+
+
 def start_containers():
     client = docker.from_env()
     conts = client.containers
     containers = get_all_containers()
     for container in containers:
+        if "options" not in container:
+            container["options"] = {}
         options, dock_path = container["options"], container["docker_path"]
+        port, pub_url = container["port"], container["public_url"]
         name = None if "name" not in options else options["name"]
         if not conts.list(all=True, filters={"name": name}):
-            run_cont = run_container(options, dock_path)
+            run_cont = run_container(options, dock_path, port, pub_url)
             if not name:
                 container["options"]["name"] = run_cont.name
                 update_config(containers, config_path)
@@ -57,7 +67,7 @@ def change_container(old_name, new_opts, new_path, new_port, new_url):
             container = client.containers.get(old_name)
             container.stop()
             container.remove()
-            run_cont = run_container(new_opts, new_path)
+            run_cont = run_container(new_opts, new_path, new_port, new_url)
             cont["options"], cont["docker_path"] = new_opts, new_path
             cont["port"], cont["public_url"] = new_port, new_url
             if "name" not in cont["options"]:
@@ -68,12 +78,15 @@ def change_container(old_name, new_opts, new_path, new_port, new_url):
             break
 
 
-def run_container(options=None, dock_path=None):
+def run_container(options, dock_path, port, pub_url):
     client = docker.from_env()
     imgs = client.images
     conts = client.containers
+    host_port = int(pub_url[17:])
+    options["detach"] = True
+    options["ports"] = {port: host_port}
     # build image
-    cont_image = imgs.build(path=dock_path)[0]
+    cont_image = imgs.build(path=check_dock_path(dock_path))[0]
     # create container
     container = conts.run(image=cont_image, **options)
     print(f"Container {container.name} run!")
@@ -87,8 +100,7 @@ def add_container(options, dock_path, port, pub_url):
         "port": port,
         "public_url": pub_url,
     }
-
-    run_cont = run_container(options, dock_path)
+    run_cont = run_container(options, dock_path, port, pub_url)
     if "name" not in cont_config["options"]:
         cont_config["options"]["name"] = run_cont.name
     containers = get_all_containers()
@@ -96,6 +108,7 @@ def add_container(options, dock_path, port, pub_url):
     update_config(containers, config_path)
     update_config(containers)
     update_timestamp(os.stat(config_path).st_mtime)
+    return run_cont
 
 
 def remove_container(name):
@@ -123,11 +136,17 @@ def find_changed_cont_and_update():
                 container = conts.get(cont["options"]["name"])
                 container.stop()
                 container.remove()
+                if "options" not in changed_conts[ind]:
+                    changed_conts[ind]["options"] = {}
                 new_opts, new_path = (
                     changed_conts[ind]["options"],
                     changed_conts[ind]["docker_path"],
                 )
-                run_cont = run_container(new_opts, new_path)
+                new_port, new_url = (
+                    changed_conts[ind]["port"],
+                    changed_conts[ind]["public_url"],
+                )
+                run_cont = run_container(new_opts, new_path, new_port, new_url)
                 if "name" not in changed_conts[ind]["options"]:
                     changed_conts[ind]["options"]["name"] = run_cont.name
                 print(f"Container {cont['options']['name']} changed and re-run!")

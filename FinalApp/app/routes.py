@@ -53,6 +53,8 @@ def change(cont_name):
     cont = get_cont_by_name(cont_name)
     form = ContainerForm()
     if form.validate_on_submit():
+        if not form.options.data:
+            form.options.data = "{}"
         new_opts, new_path = ast.literal_eval(form.options.data), form.dock_path.data
         new_port, new_url = form.port.data, form.pub_url.data
         change_container(cont_name, new_opts, new_path, new_port, new_url)
@@ -71,9 +73,12 @@ def change(cont_name):
 def add():
     form = ContainerForm()
     if form.validate_on_submit():
-        new_opts, new_path = ast.literal_eval(form.options.data), form.dock_path.data
+        new_opts = ast.literal_eval(form.options.data)
+        new_path = form.dock_path.data
         new_port, new_url = form.port.data, form.pub_url.data
-        add_container(new_opts, new_path, new_port, new_url)
-        flash(f"Add and run new container {new_opts['name']}!")
-        return redirect(url_for("cont", cont_name=new_opts["name"]))
+        container = add_container(new_opts, new_path, new_port, new_url)
+        flash(f"Add and run new container {container.name}!")
+        return redirect(url_for("cont", cont_name=container.name))
+    elif request.method == "GET":
+        form.options.data = "{}"
     return render_template("changes.html", title="Add new container", form=form)
