@@ -75,7 +75,7 @@ def change_container(old_name, new_opts, new_path, new_port, new_url):
             update_config(containers, config_path)
             update_config(containers)
             update_timestamp(os.stat(config_path).st_mtime)
-            break
+            return run_cont
 
 
 def run_container(options, dock_path, port, pub_url):

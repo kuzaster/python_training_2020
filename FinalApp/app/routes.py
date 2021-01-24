@@ -57,9 +57,9 @@ def change(cont_name):
             form.options.data = "{}"
         new_opts, new_path = ast.literal_eval(form.options.data), form.dock_path.data
         new_port, new_url = form.port.data, form.pub_url.data
-        change_container(cont_name, new_opts, new_path, new_port, new_url)
-        flash(f"Changes requested for container {new_opts['name']} applied!")
-        return redirect(url_for("cont", cont_name=new_opts["name"]))
+        rerun_cont = change_container(cont_name, new_opts, new_path, new_port, new_url)
+        flash(f"Changes requested for container {rerun_cont.name} applied!")
+        return redirect(url_for("cont", cont_name=rerun_cont.name))
     elif request.method == "GET":
         form.options.data = cont["options"]
         form.dock_path.data = cont["docker_path"]
