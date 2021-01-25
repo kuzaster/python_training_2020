@@ -10,7 +10,7 @@ from app.containers import (
     start_containers,
     watch_file_update,
 )
-from app.forms import Buttons, ContainerForm
+from app.forms import AddContainerForm, Buttons, ContainerForm
 from flask import Flask, flash, redirect, render_template, request, url_for
 
 start_containers()
@@ -71,7 +71,7 @@ def change(cont_name):
 @app.route("/")
 @app.route("/add", methods=["GET", "POST"])
 def add():
-    form = ContainerForm()
+    form = AddContainerForm()
     if form.validate_on_submit():
         new_opts = ast.literal_eval(form.options.data)
         new_path = form.dock_path.data

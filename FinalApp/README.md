@@ -9,4 +9,15 @@
 - Install packages from requirements `pip install -r requirements.txt`
  - Run `flask run` 
 - Open up your web browser and enter (http://localhost:5000/) in the address field to see the working app
-- You could _add, change or remove_ containers from a browser or _config-file.yaml_ in a directory of the project `/FinalApp/app`  
+- You could _add, change or remove_ containers from a browser or _config-file.yaml_ in a directory of the project `/FinalApp/app`
+
+# Example. How to add a new container:
+
+- Run app and open main page (http://localhost:5000/) in your browser
+- Push button `Add new container`
+- At the opened page fill next field:
+  - DockerPath: `https://github.com/mendhak/docker-http-https-echo`
+  - Port: `8080`
+  - PublicURL: `http://localhost:10000`
+- Push button `Add and run container`
+- After few seconds you will see the page of the new container

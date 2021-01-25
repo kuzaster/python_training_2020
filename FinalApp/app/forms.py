@@ -4,7 +4,7 @@ from wtforms.validators import DataRequired
 
 
 class Buttons(FlaskForm):
-    edit = submit = SubmitField("Edit container")
+    edit = SubmitField("Edit container")
     add = SubmitField("Add new container")
     remove = SubmitField("Remove container")
 
@@ -17,4 +17,6 @@ class ContainerForm(FlaskForm):
     pub_url = StringField("PublicURL", validators=[DataRequired()])
     submit = SubmitField("Apply changes")
 
-    # submit = SubmitField('Sign In')
+
+class AddContainerForm(ContainerForm):
+    submit = SubmitField("Add and run container")

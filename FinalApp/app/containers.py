@@ -40,6 +40,7 @@ def start_containers():
     client = docker.from_env()
     conts = client.containers
     containers = get_all_containers()
+    update_config(containers)
     for container in containers:
         if "options" not in container:
             container["options"] = {}
