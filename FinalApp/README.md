@@ -16,6 +16,7 @@
 - Run app and open main page (http://localhost:5000/) in your browser
 - Push button `Add new container`
 - At the opened page fill next field:
+  - ContainerName: `mendhak-echo-server`
   - DockerPath: `https://github.com/mendhak/docker-http-https-echo`
   - Port: `8080`
   - PublicURL: `http://localhost:10000`

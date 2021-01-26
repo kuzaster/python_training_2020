@@ -1,5 +1,9 @@
 - docker_path: https://github.com/oanhnn/docker-laravel-echo-server
+  name: laravel-echo-server
   options:
     detach: true
+    name: laravel-echo-server
+    ports:
+      6001: 7001
   port: 6001
-  public_url: http://localhost:8001
+  public_url: http://localhost:7001

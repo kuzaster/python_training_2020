@@ -5,7 +5,7 @@
     <h2>Choose container</h2>
     {% for container in conts %}
     <div>
-        <p><a href="{{ url_for('cont', cont_name=container.options.name) }}">{{ container.options.name }}</a></p>
+        <p><a href="{{ url_for('cont', cont_name=container.name) }}">{{ container.name }}</a></p>
 <!--        <p>{{ container }}</p>-->
     </div>
     {% endfor %}
