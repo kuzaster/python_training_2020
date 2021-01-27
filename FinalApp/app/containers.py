@@ -41,7 +41,7 @@ def start_containers():
     client = docker.from_env()
     conts = client.containers
     containers = get_all_containers()
-    update_config(containers)
+    watch_file_update()
     for container in containers:
         if "options" not in container:
             container["options"] = {}
@@ -174,19 +174,20 @@ def find_changed_cont_and_update():
                 )
                 print(f"Container {cont['name']} changed and re-run!")
                 update_config(changed_conts, config_path)
-                update_config(changed_conts)
+                update_config(changed_conts, copy_path)
                 update_timestamp(config_timestamp)
     elif len(changed_conts) > len(old_conts):
-        start_containers()
         update_timestamp(config_timestamp)
+        start_containers()
     else:
         for cont in old_conts:
             if cont not in changed_conts:
                 container = conts.get(cont["options"]["name"])
                 container.stop()
                 container.remove()
-                update_config(changed_conts)
+                update_config(changed_conts, copy_path)
                 update_timestamp(config_timestamp)
+    update_timestamp(config_timestamp)
 
 
 def watch_file_update():
@@ -228,6 +229,5 @@ def check_port_in_options(cont_name, options):
     for port in ports:
         if isinstance(port, list):
             for p in port:
-                print(p)
                 check_port_in_pub_url(cont_name, p)
         check_port_in_pub_url(cont_name, port)

@@ -38,7 +38,6 @@ def pre_checking():
 @app.route("/", methods=["GET", "POST"])
 def containers():
     check = pre_checking()
-    watch_file_update()
     form = Buttons()
     conts = get_all_containers()
     if check is not True:
@@ -52,8 +51,12 @@ def containers():
 @app.route("/")
 @app.route("/cont/<cont_name>", methods=["GET", "POST"])
 def cont(cont_name):
+    check = pre_checking()
     cont = get_cont_by_name(cont_name)
     form = Buttons()
+    if check is not True:
+        print(check)
+        return render_template("errors.html", error=check)
     if form.edit.data:
         return redirect(url_for("change", cont_name=cont_name))
     elif form.remove.data:
