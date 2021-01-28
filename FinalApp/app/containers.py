@@ -9,6 +9,24 @@ config_path = os.path.join(os.path.dirname(__file__), "config-file.yaml")
 copy_path = os.path.join(os.path.dirname(__file__), "copy-config-file.yaml")
 
 
+def pre_checking():
+    try:
+        start_containers()
+        return True
+    except docker.errors.APIError as err:
+        if "port is already allocated" in err.explanation:
+            return docker.errors.APIError(
+                "Invalid port in config-file. Port is already allocated. "
+                "Please, choose another port in config-file"
+            )
+        elif ("The container name" and "is already in use") in err.explanation:
+            return docker.errors.APIError(
+                "Container name is already in use. "
+                "Please, choose another container name in config-file"
+            )
+        return docker.errors.APIError(f"ERROR! {err}")
+
+
 def get_all_containers(path=config_path):
     with open(path) as conf:
         return yaml.safe_load(conf)
@@ -91,9 +109,10 @@ def check_ports(options, port, host_port):
     ):
         options["ports"][port].append(host_port)
         return options
-    if not isinstance(options["ports"][port], list) and host_port not in [
-        options["ports"][port]
-    ]:
+    if (
+        not isinstance(options["ports"][port], list)
+        and host_port != options["ports"][port]
+    ):
         options["ports"][port] = [options["ports"][port]]
         options["ports"][port].append(host_port)
         return options
@@ -210,24 +229,3 @@ def watch_file_update():
         else:
             with open(time_path, "w") as stamp:
                 stamp.write(str(os.stat(config_path).st_mtime))
-
-
-def check_port_in_pub_url(cont_name, port):
-    client = docker.from_env()
-    conts = client.containers
-    for container in conts.list(all=True, filters={"publish": port}):
-        if container.name != cont_name:
-            raise docker.errors.APIError(
-                f"Port {port} is already allocated. Please, choose another port"
-            )
-
-
-def check_port_in_options(cont_name, options):
-    if "ports" not in options:
-        return
-    ports = options["ports"].values()
-    for port in ports:
-        if isinstance(port, list):
-            for p in port:
-                check_port_in_pub_url(cont_name, p)
-        check_port_in_pub_url(cont_name, port)

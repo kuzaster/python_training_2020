@@ -1,38 +1,19 @@
 import ast
-import re
 
 import docker
 from app import app
 from app.containers import (
     add_container,
     change_container,
-    check_port_in_options,
-    check_port_in_pub_url,
     get_all_containers,
     get_cont_by_name,
+    pre_checking,
     remove_container,
     start_containers,
     watch_file_update,
 )
 from app.forms import AddContainerForm, Buttons, ContainerForm
 from flask import Flask, flash, redirect, render_template, request, url_for
-
-
-def pre_checking():
-    try:
-        start_containers()
-        return True
-    except docker.errors.APIError as f:
-        if "port is already allocated" in f.explanation:
-            return docker.errors.APIError(
-                "Invalid port in config-file. Port is already allocated. "
-                "Please, choose another port in config-file"
-            )
-        elif ("The container name" and "is already in use") in f.explanation:
-            return docker.errors.APIError(
-                "Container name is already in use. "
-                "Please, choose another container name in config-file"
-            )
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -77,12 +58,9 @@ def remove(cont_name):
 @app.route("/change/<cont_name>", methods=["GET", "POST"])
 def change(cont_name):
     cont = get_cont_by_name(cont_name)
-    form = ContainerForm()
+    form = ContainerForm(cont_name)
     if form.validate_on_submit():
         try:
-            port = int(re.search(r"http://localhost:(\d*)", form.pub_url.data).group(1))
-            check_port_in_pub_url(cont_name, port)
-            check_port_in_options(cont_name, ast.literal_eval(form.options.data))
             new_name = form.cont_name.data
             new_opts, new_path = (
                 ast.literal_eval(form.options.data),
@@ -95,9 +73,7 @@ def change(cont_name):
             flash(f"Changes requested for container {rerun_cont.name} applied!")
             return redirect(url_for("cont", cont_name=rerun_cont.name))
         except docker.errors.APIError as er:
-            if er.explanation:
-                er = "Container name is already in use. Please, choose another container name"
-            flash(f"An ERROR! {er}")
+            flash(f"An ERROR! {er.explanation}")
             return redirect(url_for("change", cont_name=cont_name))
     elif request.method == "GET":
         form.cont_name.data = cont["name"]
@@ -121,5 +97,5 @@ def add():
         flash(f"Add and run new container {container.name}!")
         return redirect(url_for("cont", cont_name=container.name))
     elif request.method == "GET":
-        form.options.data = "{}"
+        form.options.data = "{'detach': True}"
     return render_template("changes.html", title="Add new container", form=form)
