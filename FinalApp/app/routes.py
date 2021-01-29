@@ -42,6 +42,9 @@ def cont(cont_name):
         return redirect(url_for("change", cont_name=cont_name))
     elif form.remove.data:
         return redirect(url_for("remove", cont_name=cont_name))
+    if not cont:
+        flash(f"Container {cont_name} changed")
+        return redirect("/")
     return render_template("cont.html", cont=cont, form=form)
 
 
@@ -59,29 +62,29 @@ def remove(cont_name):
 def change(cont_name):
     cont = get_cont_by_name(cont_name)
     form = ContainerForm(cont_name)
-    if form.validate_on_submit():
-        try:
+    try:
+        if form.validate_on_submit():
             new_name = form.cont_name.data
-            new_opts, new_path = (
+            new_opts, new_image = (
                 ast.literal_eval(form.options.data),
-                form.dock_path.data,
+                form.img_name.data,
             )
             new_port, new_url = form.port.data, form.pub_url.data
             rerun_cont = change_container(
-                cont_name, new_name, new_opts, new_path, new_port, new_url
+                cont_name, new_name, new_opts, new_image, new_port, new_url
             )
             flash(f"Changes requested for container {rerun_cont.name} applied!")
             return redirect(url_for("cont", cont_name=rerun_cont.name))
-        except docker.errors.APIError as er:
-            flash(f"An ERROR! {er.explanation}")
-            return redirect(url_for("change", cont_name=cont_name))
-    elif request.method == "GET":
-        form.cont_name.data = cont["name"]
-        form.options.data = cont["options"]
-        form.dock_path.data = cont["docker_path"]
-        form.port.data = cont["port"]
-        form.pub_url.data = cont["public_url"]
-    return render_template("changes.html", title="Change container", form=form)
+        elif request.method == "GET":
+            form.cont_name.data = cont["name"]
+            form.options.data = cont["options"]
+            form.img_name.data = cont["image_name"]
+            form.port.data = cont["port"]
+            form.pub_url.data = cont["public_url"]
+        return render_template("changes.html", title="Change container", form=form)
+    except docker.errors.APIError as er:
+        flash(f"An ERROR! {er}")
+        return redirect(url_for("change", cont_name=cont_name))
 
 
 @app.route("/")
@@ -91,11 +94,15 @@ def add():
     if form.validate_on_submit():
         new_name = form.cont_name.data
         new_opts = ast.literal_eval(form.options.data)
-        new_path = form.dock_path.data
+        new_image = form.img_name.data
         new_port, new_url = form.port.data, form.pub_url.data
-        container = add_container(new_name, new_opts, new_path, new_port, new_url)
-        flash(f"Add and run new container {container.name}!")
-        return redirect(url_for("cont", cont_name=container.name))
+        try:
+            container = add_container(new_name, new_opts, new_image, new_port, new_url)
+            flash(f"Add and run new container {container.name}!")
+            return redirect(url_for("cont", cont_name=container.name))
+        except docker.errors.APIError as er:
+            flash(f"An ERROR! {er}")
+            return redirect(url_for("add"))
     elif request.method == "GET":
         form.options.data = "{'detach': True}"
     return render_template("changes.html", title="Add new container", form=form)

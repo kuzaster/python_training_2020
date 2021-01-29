@@ -8,6 +8,14 @@ from wtforms.validators import DataRequired, ValidationError
 
 client = docker.from_env()
 conts = client.containers
+imgs = client.images
+
+
+def check_image(form, field):
+    try:
+        imgs.pull(field.data)
+    except docker.errors.APIError as api:
+        raise ValidationError("Invalid image. Change it.")
 
 
 def check_public_url(form, field):
@@ -20,8 +28,9 @@ def check_public_url(form, field):
 
 def check_options(form, field):
     if not field.data:
-        raise ValidationError("This fill couldn't be empty. Please fill with: {}")
-    elif not isinstance(ast.literal_eval(field.data), dict):
+        raise ValidationError("This field couldn't be empty. Please fill with: {}")
+    options = ast.literal_eval(field.data)
+    if not isinstance(options, dict):
         raise ValidationError(
             "This field should be in form: {option_1: value_1, option_2: value_2, etc}"
         )
@@ -34,7 +43,6 @@ def check_existing_name(form, field):
 
 
 def check_free_port(cont_name, port):
-    # port = int(re.search(r"http://localhost:(\d*)", field.data).group(1))
     for container in conts.list(all=True, filters={"publish": port}):
         if container.name != cont_name:
             raise ValidationError(
@@ -44,8 +52,8 @@ def check_free_port(cont_name, port):
 
 class ContainerForm(FlaskForm):
     cont_name = StringField("ContainerName", validators=[DataRequired()])
-    options = TextAreaField("Options", validators=[check_options])
-    dock_path = StringField("DockerPath", validators=[DataRequired()])
+    options = TextAreaField("Options")
+    img_name = StringField("ImageName", validators=[DataRequired(), check_image])
     port = IntegerField("Port", validators=[DataRequired()])
     pub_url = StringField("PublicURL", validators=[DataRequired()])
     submit = SubmitField("Apply changes")
@@ -55,6 +63,7 @@ class ContainerForm(FlaskForm):
         self.original_cont_name = original_cont_name
 
     def validate_options(self, options):
+        check_options(self, options)
         options = ast.literal_eval(options.data)
         if "ports" not in options:
             return
@@ -77,7 +86,7 @@ class ContainerForm(FlaskForm):
 
     def validate_pub_url(self, pub_url):
         check_public_url(self, pub_url)
-        port = int(re.search(r"http://localhost:(\d*)", pub_url.data).group(1))
+        port = int(re.search(r"http://localhost:(\d+)", pub_url.data).group(1))
         check_free_port(self.original_cont_name, port)
 
 
@@ -85,19 +94,40 @@ class AddContainerForm(FlaskForm):
     cont_name = StringField(
         "ContainerName", validators=[DataRequired(), check_existing_name]
     )
-    options = TextAreaField("Options", validators=[check_options])
-    dock_path = StringField("DockerPath", validators=[DataRequired()])
+    options = TextAreaField("Options")
+    img_name = StringField("ImageName", validators=[DataRequired(), check_image])
     port = IntegerField("Port", validators=[DataRequired()])
     pub_url = StringField("PublicURL", validators=[DataRequired()])
     submit = SubmitField("Add and run container")
 
-    def validate_pub_url(self, pub_url):
-        check_public_url(self, pub_url)
-        port = int(re.search(r"http://localhost:(\d*)", pub_url.data).group(1))
+    def check_port(self, port):
         if conts.list(all=True, filters={"publish": port}):
             raise ValidationError(
                 f"Port {port} is already allocated. Please, choose another port"
             )
+
+    def validate_pub_url(self, pub_url):
+        check_public_url(self, pub_url)
+        port = int(re.search(r"http://localhost:(\d+)", pub_url.data).group(1))
+        self.check_port(port)
+
+    def validate_options(self, options):
+        check_options(self, options)
+        options = ast.literal_eval(options.data)
+        if "ports" not in options:
+            return
+        cont_port = list(options["ports"])
+        if self.port.data not in cont_port:
+            print(cont_port)
+            raise ValidationError(
+                f"Ports {cont_port} should contain port {self.port.data}"
+            )
+        host_ports = options["ports"].values()
+        for port in host_ports:
+            if isinstance(port, list):
+                for p in port:
+                    self.check_port(p)
+            self.check_port(port)
 
 
 class Buttons(FlaskForm):

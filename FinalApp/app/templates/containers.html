@@ -6,7 +6,6 @@
     {% for container in conts %}
     <div>
         <p><a href="{{ url_for('cont', cont_name=container.name) }}">{{ container.name }}</a></p>
-<!--        <p>{{ container }}</p>-->
     </div>
     {% endfor %}
     <form action="" method="post" novalidate>

@@ -4,6 +4,7 @@ import time
 
 import docker
 import yaml
+from app.validation import validate_config
 
 config_path = os.path.join(os.path.dirname(__file__), "config-file.yaml")
 copy_path = os.path.join(os.path.dirname(__file__), "copy-config-file.yaml")
@@ -14,16 +15,6 @@ def pre_checking():
         start_containers()
         return True
     except docker.errors.APIError as err:
-        if "port is already allocated" in err.explanation:
-            return docker.errors.APIError(
-                "Invalid port in config-file. Port is already allocated. "
-                "Please, choose another port in config-file"
-            )
-        elif ("The container name" and "is already in use") in err.explanation:
-            return docker.errors.APIError(
-                "Container name is already in use. "
-                "Please, choose another container name in config-file"
-            )
         return docker.errors.APIError(f"ERROR! {err}")
 
 
@@ -48,40 +39,27 @@ def update_config(new_data, path=copy_path):
         yaml.dump(new_data, conf)
 
 
-def check_dock_path(dock_path):
-    if dock_path.startswith("https://github"):
-        dock_path = dock_path[8:]
-        return dock_path
-    return dock_path
-
-
 def start_containers():
     client = docker.from_env()
     conts = client.containers
     containers = get_all_containers()
     watch_file_update()
     for container in containers:
-        if "options" not in container:
-            container["options"] = {}
         cont_name = container["name"]
-        options, dock_path = container["options"], container["docker_path"]
+        options, img_name = container["options"], container["image_name"]
         port, pub_url = container["port"], container["public_url"]
         if not conts.list(all=True, filters={"name": cont_name}):
-            run_cont = run_container(cont_name, options, dock_path, port, pub_url)
+            run_container(cont_name, options, img_name, port, pub_url)
             update_config(containers, config_path)
             update_config(containers, copy_path)
         elif conts.get(cont_name).status != "running":
-            try:
-                conts.get(cont_name).start()
-                print(f"Container {cont_name} started!")
-            except docker.errors.APIError as er:
-                conts.get(cont_name).remove()
-                raise er
+            conts.get(cont_name).start()
+            print(f"Container {cont_name} started!")
         else:
             print(f"Container {cont_name} is running!")
 
 
-def change_container(old_name, new_name, new_opts, new_path, new_port, new_url):
+def change_container(old_name, new_name, new_opts, new_image, new_port, new_url):
     containers = get_all_containers()
     client = docker.from_env()
     for cont in containers:
@@ -89,9 +67,9 @@ def change_container(old_name, new_name, new_opts, new_path, new_port, new_url):
             container = client.containers.get(old_name)
             container.stop()
             container.remove()
-            run_cont = run_container(new_name, new_opts, new_path, new_port, new_url)
+            run_cont = run_container(new_name, new_opts, new_image, new_port, new_url)
             cont["name"] = new_name
-            cont["options"], cont["docker_path"] = new_opts, new_path
+            cont["options"], cont["image_name"] = new_opts, new_image
             cont["port"], cont["public_url"] = new_port, new_url
             update_config(containers, config_path)
             update_config(containers)
@@ -119,31 +97,31 @@ def check_ports(options, port, host_port):
     return options
 
 
-def run_container(cont_name, options, dock_path, port, pub_url):
+def run_container(cont_name, options, img_name, port, pub_url):
     client = docker.from_env()
-    imgs = client.images
     conts = client.containers
     host_port = int(re.search(r"http://localhost:(\d*)", pub_url).group(1))
     options["detach"] = True
     options["name"] = cont_name
     options = check_ports(options, port, host_port)
-    # build image
-    cont_image = imgs.build(path=check_dock_path(dock_path))[0]
     # create container
-    container = conts.run(image=cont_image, **options)
-    print(f"Container {container.name} run!")
-    return container
+    try:
+        container = conts.run(image=img_name, **options)
+        print(f"Container {container.name} run!")
+        return container
+    except TypeError:
+        raise docker.errors.APIError("Fail in run container. Change parameters")
 
 
-def add_container(cont_name, options, dock_path, port, pub_url):
+def add_container(cont_name, options, img_name, port, pub_url):
     cont_config = {
         "name": cont_name,
         "options": options,
-        "docker_path": dock_path,
+        "image_name": img_name,
         "port": port,
         "public_url": pub_url,
     }
-    run_cont = run_container(cont_name, options, dock_path, port, pub_url)
+    run_cont = run_container(cont_name, options, img_name, port, pub_url)
     containers = get_all_containers()
     containers.append(cont_config)
     update_config(containers, config_path)
@@ -163,50 +141,6 @@ def remove_container(name):
     print(f"Container {name} stopped and removed")
     update_config(containers)
     update_timestamp(os.stat(config_path).st_mtime)
-
-
-def find_changed_cont_and_update():
-    changed_conts = get_all_containers()
-    old_conts = get_all_containers(copy_path)
-    client = docker.from_env()
-    conts = client.containers
-    config_timestamp = os.stat(config_path).st_mtime
-    if len(changed_conts) == len(old_conts):
-        for ind, cont in enumerate(old_conts):
-            if changed_conts[ind] != cont:
-                container = conts.get(cont["name"])
-                container.stop()
-                container.remove()
-                if "options" not in changed_conts[ind]:
-                    changed_conts[ind]["options"] = {}
-                new_name = changed_conts[ind]["name"]
-                new_opts, new_path = (
-                    changed_conts[ind]["options"],
-                    changed_conts[ind]["docker_path"],
-                )
-                new_port, new_url = (
-                    changed_conts[ind]["port"],
-                    changed_conts[ind]["public_url"],
-                )
-                run_cont = run_container(
-                    new_name, new_opts, new_path, new_port, new_url
-                )
-                print(f"Container {cont['name']} changed and re-run!")
-                update_config(changed_conts, config_path)
-                update_config(changed_conts, copy_path)
-                update_timestamp(config_timestamp)
-    elif len(changed_conts) > len(old_conts):
-        update_timestamp(config_timestamp)
-        start_containers()
-    else:
-        for cont in old_conts:
-            if cont not in changed_conts:
-                container = conts.get(cont["options"]["name"])
-                container.stop()
-                container.remove()
-                update_config(changed_conts, copy_path)
-                update_timestamp(config_timestamp)
-    update_timestamp(config_timestamp)
 
 
 def watch_file_update():
@@ -229,3 +163,42 @@ def watch_file_update():
         else:
             with open(time_path, "w") as stamp:
                 stamp.write(str(os.stat(config_path).st_mtime))
+
+
+def find_changed_cont_and_update():
+    new_conts = get_all_containers()
+    old_conts = get_all_containers(copy_path)
+    len_new, len_old = len(new_conts), len(old_conts)
+    client = docker.from_env()
+    conts = client.containers
+    if len_old > len_new:
+        for cont in old_conts[len_new:]:
+            container = conts.get(cont["name"])
+            container.stop()
+            container.remove()
+            print(f"Container {cont['name']} stopped and removed")
+    for ind, container in enumerate(new_conts):
+        if container not in old_conts:
+            container = (
+                validate_config(container, old_conts[ind])
+                if ind < len_old
+                else validate_config(container)
+            )
+            if ind < len_old:
+                old_cont = conts.get(old_conts[ind]["name"])
+                old_cont.stop()
+                old_cont.remove()
+            new_name = container["name"]
+            new_opts, new_image = (
+                container["options"],
+                container["image_name"],
+            )
+            new_port, new_url = (
+                container["port"],
+                container["public_url"],
+            )
+            run_container(new_name, new_opts, new_image, new_port, new_url)
+    update_config(new_conts, config_path)
+    config_timestamp = os.stat(config_path).st_mtime
+    update_config(new_conts, copy_path)
+    update_timestamp(config_timestamp)

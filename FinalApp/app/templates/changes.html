@@ -19,9 +19,9 @@
             {% endfor %}
         </p>
         <p>
-            {{ form.dock_path.label }}<br>
-            {{ form.dock_path(size=32) }}
-            {% for error in form.dock_path.errors %}
+            {{ form.img_name.label }}<br>
+            {{ form.img_name(size=32) }}
+            {% for error in form.img_name.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>

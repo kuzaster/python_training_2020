@@ -14,11 +14,11 @@
 # Example. How to add a new container:
 
 - Run app and open main page (http://localhost:5000/) in your browser
-- Push button `Add new container`
+- Push the button `Add new container`
 - At the opened page fill next fields:
-  - ContainerName: `mendhak-echo-server`
-  - DockerPath: `https://github.com/mendhak/docker-http-https-echo`
+  - ContainerName: `inanimate-echo-server`
+  - ImageName: `inanimate/echo-server`
   - Port: `8080`
   - PublicURL: `http://localhost:10000`
-- Push button `Add and run container`
+- Push the button `Add and run container`
 - After few seconds you will see the page of the new container
